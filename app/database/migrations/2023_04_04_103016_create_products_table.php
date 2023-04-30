@@ -19,6 +19,7 @@ class CreateProductsTable extends Migration
             $table->string('description');
             $table->string('photo');
             $table->float('price', 8, 2);
+            $table->foreignId('user_id')->nullable()->constrained()->onUpdate('cascade')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -14,10 +14,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return [
-            "status" => 200,
-            "data" => Product::all()
-        ];
+        return response(Product::all(), 200);
     }
 
     /**
@@ -37,11 +34,10 @@ class ProductController extends Controller
 
         $product = Product::create($request->all());
 
-        return [
-            "status" => 200,
+        return response([
+            "message" => 'Product created successfully',
             "data" => $product,
-            "message" => 'Product created successfully', 
-        ];
+        ], 201);
     }
 
     /**
@@ -52,10 +48,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        return [
-            "status" => 200,
-            "data" => $product,
-        ];
+        return response($product, 200);
     }
 
     /**
@@ -71,16 +64,15 @@ class ProductController extends Controller
             "name" => "required|max:255",
             "description" => "required_without:photo",
             "photo" => "required_without:description",
-            "price" => "required|numeric|max:8",
+            "price" => "required|numeric|max:10e6",
         ]);
 
         $product->update($request->all());
- 
-        return [
-            "status" => 200,
+
+        return response([
+            "message" => "Product updated successfully",
             "data" => $product,
-            "message" => "Product updated successfully"
-        ];
+        ], 200);
     }
 
     /**
@@ -92,10 +84,9 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-        return [
-            "status" => 200,
+        return response([
+            "message" => "Product deleted successfully",
             "data" => $product,
-            "message" => "Product deleted successfully"
-        ];
+        ], 200);
     }
 }

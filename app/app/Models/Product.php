@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
@@ -36,11 +38,13 @@ class Product extends Model
         'photo' => '',
     ];
 
+    // Orders for one product
     public function orders(): BelongsToMany
     {
-        return $this->belongsToMany(Order::class);
+        return $this->belongsToMany(Order::class)->withPivot('id', 'total_price', 'is_validated')->withTimestamps();
     }
 
+    // Seller of the product
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
