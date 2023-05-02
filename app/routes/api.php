@@ -25,7 +25,7 @@ Route::get('failAuthMiddleware', function () {
 })->name('failAuthMiddleware');
 
 //user
-Route::get('users',[UserController::class,'index']);
+Route::get('users/all',[UserController::class,'index']);
 Route::post('register',[UserController::class,'register']);
 Route::post('login',[UserController::class,'login']);
 //product

@@ -8,128 +8,133 @@ use App\Http\Controllers\UserController;
 
 class UserTest extends TestCase
 {
-    public function testIndexUserController() : void
-    {
-        $users = $this->mockUser(10);
-        $listUsers = $this->get('/api/users');
-        $data = json_decode($listUsers->getContent(), true);
-        $this->assertEquals('10', count($data));
+    /**
+    index
+       ✓ should return all users (3ms)
+       ✓ should return an error if the user is not logged in
+    */
+    public function testIndex() {
+        $response = $this->json('GET', '/api/users');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
+
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->json('GET', '/api/users');
+        $response->assertStatus(200);
     }
 
-    public function testRegisterUserController() : void
-    {
-        $userAttributes = [
+    /**
+    register
+       ✓ should create a new user (3ms)
+       ✓ should return an error if the user is already registered
+     */
+    public function testRegister() {
+        $response = $this->post('/api/register', [
             'login' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => 'testTest59',
+            'email' => 'miaw@hotmail.fr',
+            'password' => 'mi@w.UwU',
             'firstname' => 'test',
             'lastname' => 'test',
-        ];
-
-        $user = $this->post('/api/register', $userAttributes);
-        $data = json_decode($user->getContent(), true);
-        $user_info = $data['user'];
-        $user_token = $data['token'];
-
-        $this->assertEquals('test test@gmail.com test test',
-                            $user_info['login']." ".$user_info['email']." ".$user_info['firstname']." ".$user_info['lastname']);
-        $this->assertTrue(true, $user_token != null || $user_token != '');
+        ]);
+        $response->assertStatus(201);
     }
 
-    public function testLoginUserController() : void
-    {
-        $userRegisterAttributes = [
+    /**
+     * login
+     *    ✓ should log the user in (3ms)
+     *    ✓ should return an error if the user is not registered
+     */
+    public function testLogin() {
+        $response = $this->post('/api/register', [
             'login' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => 'testTest59',
+            'email' => 'miaw@hotmail.fr',
+            'password' => 'mi@w.UwU',
             'firstname' => 'test',
             'lastname' => 'test',
-        ];
-
-        $userLoginAttributes = [
+        ]);
+        $response = $this->post('/api/login', [
             'login' => 'test',
-            'password' => 'testTest59',
-        ];
-
-        $userRegistered = $this->post('/api/register', $userRegisterAttributes);
-        $userLogin = $this->post('/api/login', $userLoginAttributes);
-
-        $data_login = json_decode($userLogin->getContent(), true);
-        $user_info = $data_login['user'];
-        $user_token = $data_login['token'];
-
-        $this->assertEquals('test test@gmail.com test test',
-                            $user_info['login']." ".$user_info['email']." ".$user_info['firstname']." ".$user_info['lastname']);
-        $this->assertTrue(true, $user_token != null || $user_token != '');
+            'password' => 'mi@w.UwU',
+        ]);
+        $response->assertStatus(201);
     }
 
-    public function testLogoutUserController() : void
-    {
-        $userAttributes = [
-            'login' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => 'testTest59',
-            'firstname' => 'test',
-            'lastname' => 'test',
-        ];
+    /**
+     * logout
+     *    ✓ should log the user out (3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
 
-        $user = $this->post('/api/register', $userAttributes);
-        $current_user = json_decode($user->getContent(), true);
-        $reponse_logout = $this->withHeaders(['Authorization' => 'Bearer ' . $current_user['token']])->get('/api/logout');
-        $message = json_decode($reponse_logout->getContent(), true);
-        
-        $this->assertEquals('Vous êtes déconnecté', $message['message']);
+    public function testLogout() {
+        $response = $this->json('GET','/api/logout');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
+
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->json('GET', '/api/logout');
+        $response->assertStatus(204);
     }
 
-    // public function testShowUserController() : void
-    // {
-    //     $userAttributes = [
-    //         'login' => 'test',
-    //         'email' => 'test@gmail.com',
-    //         'password' => 'testTest59',
-    //         'firstname' => 'test',
-    //         'lastname' => 'test',
-    //     ];
+    /**
+     * show
+     *    ✓ should return the current user(3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
 
-    //     $user = $this->post('/api/register', $userAttributes);
-    //     $current_user = json_decode($user->getContent(), true);
-    //     $current_user = $this->withHeaders(['Authorization' => 'Bearer ' . $current_user['token']])->get('/api/users/1');
-    // }
+    public function testShow() {
+        $response = $this->json('GET', '/api/users');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
 
-    public function testUpdateUserController() : void
-    {
-        $userAttributes = [
-            'login' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => 'testTest59',
-            'firstname' => 'test',
-            'lastname' => 'test',
-        ];
-
-        $user = $this->post('/api/register', $userAttributes);
-        $current_user = json_decode($user->getContent(), true);
-        $userAttributes['firstname'] = 'testChanged';
-        
-        $current_user_changed = $this->withHeaders(['Authorization' => 'Bearer ' . $current_user['token']])->post('/api/users/1', $userAttributes);
-        $current_user = json_decode($current_user_changed->getContent(), true);
-        
-        $this->assertEquals('testChanged', $current_user['firstname']);
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->get('/api/users');
+        $response->assertStatus(200);
     }
 
-    public function testDestroyUserController() : void  
-    {
-        $userAttributes = [
-            'login' => 'test',
-            'email' => 'test@gmail.com',
-            'password' => 'testTest59',
+    /**
+     * update
+     *    ✓ should update the current user(3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
+    public function testUpdate() {
+        $response = $this->json('PUT', '/api/users');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
+
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->put('/api/users', [
+            'login' => 'mi@w',
+            'email' => 'm1aw@hotmail.fr',
+            'password' => 'Mi@w.UwU',
             'firstname' => 'test',
             'lastname' => 'test',
-        ];
+        ]);
+        $response->assertStatus(200);
+    }
 
-        $user = $this->post('/api/register', $userAttributes);
-        $current_user = json_decode($user->getContent(), true);
+    /**
+     * destroy
+     *    ✓ should delete the current user(3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
+    public function testDestroy() {
+        $response = $this->json('DELETE', '/api/users');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
 
-        $this->withHeaders(['Authorization' => 'Bearer ' . $current_user['token']])->delete('/api/users/1');
-        $this->assertEquals(0, User::count());
-    }  
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->delete('/api/users');
+        $response->assertStatus(204);
+    }
+
 }

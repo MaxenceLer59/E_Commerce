@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ProductController extends Controller
 {
@@ -32,7 +33,10 @@ class ProductController extends Controller
             "price" => "required|numeric|max:10e6",
         ]);
 
-        $product = Product::create($request->all());
+        $product = Product::create(
+            $request->all()+
+            ["user_id" => auth()->user()->id],
+        );
 
         return response([
             "message" => 'Product created successfully',

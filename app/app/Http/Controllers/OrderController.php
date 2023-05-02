@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class OrderController extends Controller
 {
@@ -37,9 +38,10 @@ class OrderController extends Controller
     {
         $data = [];
         // A modifier une fois le merge avec sanctum
-        $orders = Order::where('user_id', auth()->user()->id)->where("is_validated", false)->all();
+        $orders = Order::where('user_id', auth()->user()->id)->where("is_validated", true)->get();
         //$orders = Order::all();
         foreach ($orders as $order){
+            $order->total_price = $this->getTotalPrice($order);
             $data += [
                 "products" => $order->products,
             ];
@@ -62,6 +64,7 @@ class OrderController extends Controller
             //$order = Order::create(["user_id" => 1]);
         }
         $order->products()->attach($product);
+        $order->total_price = $this->getTotalPrice($order);
         $p = $order->products;
 
         return response([
@@ -107,6 +110,7 @@ class OrderController extends Controller
             return response("Error : No current cart found, please add a product first.", 404);
         }
         $cart->update(['is_validated' => !$cart->is_validated]);
+        $cart->total_price = $this->getTotalPrice($cart);
         return response([
             "message" => "Cart validated successfully",
             "data" => $cart,
@@ -141,6 +145,7 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         $order->delete();
+        $order->total_price = $this->getTotalPrice($order);
         return response([
             "message" => "Order deleted successfully",
             "data" => $order,

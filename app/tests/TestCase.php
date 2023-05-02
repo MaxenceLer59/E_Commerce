@@ -9,7 +9,6 @@ use \App\Models\Product;
 
 abstract class TestCase extends BaseTestCase
 {
-   // php artisan make:test UserTest
    use CreatesApplication;
    use RefreshDatabase;
 

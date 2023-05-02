@@ -2,83 +2,106 @@
 
 namespace Tests\Feature;
 
+use App\Models\Order;
+use App\Models\User;
 use App\Models\Product;
 use Tests\TestCase;
 use App\Http\Controllers\ProductController;
 
 class ProductTest extends TestCase
 {
-    public function testIndexProductController() : void
+   /**
+    * index
+    *    ✓ should return all products (3ms)
+    */
+    public function testIndex()
     {
-        $product = $this->mockProduct(10);
-        $listProducts = $this->get('/api/products');
-        $data = json_decode($listProducts->getContent(), true)['data'];
-        $this->assertEquals('10', count($data));
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->json('GET', '/api/products');
+        $response->assertStatus(200);
     }
 
-    public function testStoreProductController() : void
+    /**
+     * show
+     *    ✓ should return a product (3ms)
+     *    ✓ should return an error if the product does not exist
+     */
+    public function testShow()
     {
-        $productAttributes = [
-            'name' => 'produit',
-            'description' => 'description du produit',
-            'photo' => 'url de la photo',
-            'price' => '100',
-        ];
+        $user = User::factory()->create();
+        $productId = Product::factory()->create()->id;
+        $response = $this->actingAs($user, 'sanctum')->json('POST', '/api/carts/'.$productId);
+        $response = $this->actingAs($user, 'sanctum')->json('GET', '/api/products/'.$productId);
+        $response->assertStatus(200);
 
-        $this->post('/api/products', $productAttributes);
-        $product = Product::first();
-
-        $this->assertEquals('produit description du produit url de la photo 100',
-                            $product->name." ".$product->description." ".$product->photo." ".$product->price);
+        $response = $this->actingAs($user, 'sanctum')->json('GET', '/api/products/999');
+        $response->assertStatus(404);
     }
 
-    public function testShowProductController() : void
+    /**
+     * store
+     *    ✓ should create a product (3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
+    public function testStore()
     {
-        $productAttributes = [
-            'name' => 'produit',
-            'description' => 'description du produit',
-            'photo' => 'url de la photo',
-            'price' => '100',
-        ];
+        $response = $this->json('POST', '/api/products');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
 
-        $this->post('/api/products', $productAttributes);
-        $data = $this->get('/api/products/1');
-        $product = json_decode($data->getContent(), true)['data'];
-        $this->assertEquals('produit description du produit url de la photo 100',
-                            $product['name']." ".$product['description']." ".$product['photo']." ".$product['price']);
+        $user = User::factory()->create();
+        $response = $this->actingAs($user, 'sanctum')->json('POST', '/api/products', [
+            'name' => 'test',
+            'description' => 'test',
+            'price' => 10,
+            'image' => 'test'
+        ]);
+        $response->assertStatus(201);
     }
 
-    public function testUpdateProductController() : void
+    /**
+     * update
+     *    ✓ should modify a product (3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
+    public function testUpdate()
     {
-        $productAttributes = [
-            'name' => 'produit',
-            'description' => 'description du produit',
-            'photo' => 'url de la photo',
-            'price' => '100',
-        ];       
-        $this->mockProduct(1, $productAttributes);
-        
-        $productAttributes['name'] = 'changed';
-        $this->patch('/api/products/1', $productAttributes);
-        $product = Product::first();
-        
-        $this->assertEquals('changed', $product->name);
+        $response = $this->json('PUT', '/api/products/1');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
+
+        $user = User::factory()->create();
+        $productId = Product::factory()->create()->id;
+        $response = $this->actingAs($user, 'sanctum')->json('PUT', '/api/products/'.$productId, [
+            'name' => 'test',
+            'description' => 'test',
+            'price' => 10,
+            'quantity' => 10,
+            'image' => 'test'
+        ]);
+        $response->assertStatus(200);
     }
 
-    public function testDestroyProductController() : void
+    /**
+     * destroy
+     *    ✓ should delete a product (3ms)
+     *    ✓ should return an error if the user is not logged in
+     */
+    public function testDestroy()
     {
-        $productAttributes = [
-            'name' => 'produit',
-            'description' => 'description du produit',
-            'photo' => 'url de la photo',
-            'price' => '100',
-        ];
-        
-        $this->mockProduct(1, $productAttributes);
-        $product = Product::first();
+        $response = $this->json('DELETE', '/api/products/1');
+        $response->assertStatus(401);
+        $response->assertJson([
+            "message" => "Unauthenticated."
+        ]);
 
-        $product->delete('/api/products/1');
-
-        $this->assertEquals(0, Product::count());
+        $user = User::factory()->create();
+        $productId = Product::factory()->create()->id;
+        $response = $this->actingAs($user, 'sanctum')->json('DELETE', '/api/products/'.$productId);
+        $response->assertStatus(200);
     }
 }

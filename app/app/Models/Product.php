@@ -21,6 +21,7 @@ class Product extends Model
         'description',
         'photo',
         'price',
+        'user_id',
     ];
 
     protected $hidden = [
